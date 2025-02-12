@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  db :
+    image : postgres:11.7
+    platform: linux/amd64  # Specify the host platform
+    ports : 
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=delphis
+    volumes:
+      - ./db2/export:/db2/export
+      - ./db/data:/var/lib/postgresql/data
