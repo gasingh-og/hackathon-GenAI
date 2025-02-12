@@ -17,7 +17,6 @@ def send_request(message):
     #chain = create_sql_query_chain(llm, db)
 
 
-
     prompt_template = PromptTemplate.from_template(
         """You Answer the question based on the context below.
 
@@ -33,6 +32,7 @@ def send_request(message):
     )
     prompt = prompt_template.format()
 
+
     # llm.invoke(prompt)
 
 
@@ -45,14 +45,13 @@ def send_request(message):
     #mysql_uri = f"mysql+pymysql://{username}:{password}@{host}:{port}/{database_schema}"
     postgres_uri = f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database_schema}"
     # postgres_uri = f"postgresql+psycopg2://{username}@{host}:{port}/{database_schema}"
-
     # Create a temporary SQLDatabase object to check available tables
     temp_db = SQLDatabase.from_uri(postgres_uri)
-    available_tables = temp_db.get_usable_table_names()
+    # available_tables = temp_db.get_usable_table_names()
     # print("Available tables:", available_tables)
 
     # Check if the required tables exist in the database
-    required_tables = ["entities", "gdapi_entities", "datasets", "dataset_tables", "entity_data"]
+    required_tables = ["entities", "gdapi_entities", "datasets", "dataset_tables", "entity_data","reports","report_types"]
 
 
     # Create the SQLDatabase object with the required tables
@@ -68,6 +67,9 @@ def send_request(message):
     - dataset_tables has a column dataset_id which is a foreign key on datasets table on id column. dataset_tables has a column with name as table_name.
     - entity_data table has the size of data stored for each entity. This table also has the table_name column.
     - Use the table_name column in dataset_tables and entity_data for the join between two tables.
+    - reports table has a column as entity_id which is a foreign key on entities table on id column.use this to join with entities table.
+    - reports table has a column report_type_id which is a foreign key on report_types table on id column. reports table has a column with name as report_name.
+    - 
     """
 
     prompt_template = PromptTemplate.from_template(
@@ -94,9 +96,11 @@ def send_request(message):
     prompt = prompt_template.format(input=message, top_k=5)
 
     response = chain.invoke({"question": prompt})
+    print(response)
     # Remove backticks from the response
     cleaned_response = response.replace("```", "")
     return db.run(cleaned_response)
 
 # a = send_request("which entity has the most data stored?")
+# "Which entity has the most number of reports created?"
 # print(a)
