@@ -94,7 +94,6 @@ def send_request(message):
     prompt = prompt_template.format(input=message, top_k=5)
 
     response = chain.invoke({"question": prompt})
-    # print(response)
     # Remove backticks from the response
     cleaned_response = response.replace("```", "")
     return db.run(cleaned_response)
