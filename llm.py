@@ -10,6 +10,19 @@ from langchain_openai import ChatOpenAI
 import psycopg2
 from dotenv import load_dotenv
 load_dotenv()
+def parse_dynamic_data(input_data):
+    # Extract the first element of the outer tuple and list
+    records = input_data[0][0]
+
+    # Initialize dictionary with dynamic keys
+    parsed_data = {key: [] for key in records[0].keys()}
+
+    # Populate dictionary with values
+    for record in records:
+        for key, value in record.items():
+            parsed_data[key].append(value)
+
+    return parsed_data
 
 def send_request(message):
     llm = ChatOpenAI(temperature=0)
@@ -45,6 +58,7 @@ def send_request(message):
     #mysql_uri = f"mysql+pymysql://{username}:{password}@{host}:{port}/{database_schema}"
     postgres_uri = f"postgresql+psycopg2://{username}:{password}@{host}:{port}/{database_schema}"
     # postgres_uri = f"postgresql+psycopg2://{username}@{host}:{port}/{database_schema}"
+    
     # Create a temporary SQLDatabase object to check available tables
     temp_db = SQLDatabase.from_uri(postgres_uri)
     # available_tables = temp_db.get_usable_table_names()
@@ -84,7 +98,7 @@ def send_request(message):
         Question: Question here
         SQLQuery: SQL Query to run
         SQLResult: Result of the SQLQuery
-        Answer: Final answer here
+        Answer: While Answering the question,please include the table header as well as the data.
 
         Only use the following context :
         {context}
@@ -98,9 +112,12 @@ def send_request(message):
     response = chain.invoke({"question": prompt})
     print(response)
     # Remove backticks from the response
-    cleaned_response = response.replace("```", "")
-    return db.run(cleaned_response)
-
+    cleaned_response = f"SELECT json_agg(t) FROM ({response.replace('```', '').replace(';', '')}) t;"
+    db_response = db.run(cleaned_response)
+    #print(db_response)
+    #print(type(eval(db_response)))
+    parsed_output = parse_dynamic_data(eval(db_response))
+    return parsed_output
 # a = send_request("which entity has the most data stored?")
 # "Which entity has the most number of reports created?"
 # print(a)
